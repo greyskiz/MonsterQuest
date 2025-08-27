@@ -1,1 +1,4 @@
 # MonsterQuest
+
+
+To get started, clone the repository with git clone https://github.com/greyskiz/MonsterQuest.git and then run npm install inside the project folder, which will automatically install everything needed including Express, Prisma, bcrypt, dotenv, JSON Web Token, and PostgreSQL client. Next, create a .env file (you can copy from .env.example) and set up your own DATABASE_URL for Postgres and a JWT_SECRET value. Once that is done, run npx prisma migrate dev --name init to create the database tables, then start the app with npm run dev for development or npm start for production. The server will run on http://localhost:3000 and no extra packages need to be installed manually — everything required is already listed in package.json and handled by npm install.
