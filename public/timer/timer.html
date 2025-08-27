@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Study Timer – MonsterQuest</title>
+<link rel="stylesheet" href="/main.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Study Timer</h1>
+
+    <!-- Show current monster info -->
+    <div id="current" style="margin: 10px 0; font-weight:bold;">
+      Loading current monster...
+    </div>
+
+    <!-- Timer selection -->
+    <div style="margin-bottom: 15px;">
+      <button class="tbtn" data-min="10">10 min</button>
+      <button class="tbtn" data-min="20">20 min</button>
+      <button class="tbtn" data-min="30">30 min</button>
+      <button class="tbtn" data-min="60">1 h</button>
+      <button class="tbtn" data-min="120">2 h</button>
+    </div>
+
+    <!-- Countdown display -->
+    <h2 id="countdown">00:00</h2>
+
+    <!-- Controls -->
+    <div style="margin-top: 15px;">
+      <button id="startBtn">Start</button>
+      <button id="stopBtn" disabled>Stop</button>
+    </div>
+
+    <!-- Status message -->
+    <p id="msg" style="margin-top: 10px; color:#2c3e50;"></p>
+
+    <!-- Nav -->
+    <p style="margin-top:20px;">
+      <a href="/home.html">Back to Home</a>
+    </p>
+  </div>
+
+  <!-- Scripts -->
+<script src="/auth.js"></script>
+<script src="/timer/timer.js"></script>
+</body>
+</html>

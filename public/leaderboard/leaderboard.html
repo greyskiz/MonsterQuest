@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Monthly Leaderboard – MonsterQuest</title>
+  <link rel="stylesheet" href="main.css"/>
+</head>
+<body>
+  <div class="container">
+    <h1>Monthly Leaderboard</h1>
+    <table id="board" style="width:100%; margin-top:15px;">
+      <thead>
+        <tr>
+          <th style="text-align:left;">Rank</th>
+          <th style="text-align:left;">Name</th>
+          <th style="text-align:right;">Minutes</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <p style="margin-top:10px;"><a href="/home.html">Back to Home</a></p>
+  </div>
+
+  <script>
+    async function loadBoard() {
+      const res = await fetch('/api/leaderboard/monthly');
+      const data = await res.json();
+      const tbody = document.querySelector('#board tbody');
+      tbody.innerHTML = '';
+      data.leaderboard.forEach(row => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${row.rank}</td>
+          <td>${row.displayName}</td>
+          <td style="text-align:right;">${row.minutes}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+    loadBoard().catch(err => console.error(err));
+  </script>
+</body>
+</html>

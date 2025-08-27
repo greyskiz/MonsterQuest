@@ -1,0 +1,89 @@
+/* Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #f4f4f9;
+  color: #333;
+  line-height: 1.5;
+}
+
+/* Container for forms and pages */
+.container {
+  max-width: 400px;
+  margin: 80px auto;
+  background: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  text-align: center;
+}
+
+h1 {
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+/* Form styles */
+form {
+  display: flex;
+  flex-direction: column;
+}
+
+label {
+  text-align: left;
+  margin: 8px 0 4px;
+  font-weight: bold;
+}
+
+input {
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 15px;
+}
+
+input:focus {
+  outline: none;
+  border-color: #4CAF50;
+  box-shadow: 0 0 4px rgba(76, 175, 80, 0.6);
+}
+
+/* Buttons */
+button,
+input[type="submit"] {
+  padding: 10px;
+  background: #4CAF50;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover,
+input[type="submit"]:hover {
+  background: #45a049;
+}
+
+/* Error messages */
+#error {
+  color: #c0392b;
+  margin-top: 10px;
+}
+
+/* Links */
+a {
+  color: #3498db;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}

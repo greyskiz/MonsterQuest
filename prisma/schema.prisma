@@ -1,0 +1,105 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  passwordHash   String
+  displayName    String
+  timezone       String   @default("UTC")
+  role           String   @default("USER")    // "USER" | "ADMIN"
+  leaderboardVis String   @default("PUBLIC")  // "PUBLIC" | "PRIVATE"
+  coinsBalance   Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Back-relations (explicit names so Prisma never guesses)
+  sessions         StudySession[]      @relation("UserStudySessions")
+  encounters       Encounter[]         @relation("UserEncounters")        // SOLO encounters owned by this user
+  defeats          UserMonsterDefeat[] @relation("UserDefeats")
+  partyMemberships PartyMember[]       @relation("UserPartyMemberships")
+  partiesOwned     Party[]             @relation("PartyOwner")            // parties this user owns
+}
+
+model Party {
+  id        String    @id @default(uuid())
+  name      String
+  ownerId   String
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  owner      User        @relation("PartyOwner", fields: [ownerId], references: [id])
+  members    PartyMember[]
+  encounters Encounter[] @relation("PartyEncounters")
+}
+
+model PartyMember {
+  id       String   @id @default(uuid())
+  partyId  String
+  userId   String
+  role     String   @default("member") // "owner" | "member"
+  joinedAt DateTime @default(now())
+
+  party Party @relation(fields: [partyId], references: [id], onDelete: Cascade)
+  user  User  @relation("UserPartyMemberships", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model MonsterTemplate {
+  id            String    @id @default(uuid())
+  name          String
+  baseHpMinutes Int
+  imageUrl      String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  encounters Encounter[]
+  defeats    UserMonsterDefeat[]  // back-rel for UserMonsterDefeat.template
+}
+
+model Encounter {
+  id          String   @id @default(uuid())
+  templateId  String
+  scopeType   String   // "SOLO" | "PARTY"
+  partyId     String?
+  userId      String?
+  hpRemaining Int
+  status      String   @default("ACTIVE") // "ACTIVE" | "DEFEATED"
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  template MonsterTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  party    Party?          @relation("PartyEncounters", fields: [partyId], references: [id], onDelete: Cascade)
+  user     User?           @relation("UserEncounters", fields: [userId], references: [id], onDelete: Cascade)
+
+  sessions StudySession[]  @relation("EncounterSessions")
+}
+
+model StudySession {
+  id          String   @id @default(uuid())
+  userId      String
+  encounterId String
+  durationMin Int
+  startedAt   DateTime
+  endedAt     DateTime
+  createdAt   DateTime @default(now())
+
+  user      User      @relation("UserStudySessions", fields: [userId], references: [id], onDelete: Cascade)
+  encounter Encounter @relation("EncounterSessions", fields: [encounterId], references: [id], onDelete: Cascade)
+}
+
+model UserMonsterDefeat {
+  id          String   @id @default(uuid())
+  userId      String
+  templateId  String
+  encounterId String
+  defeatedAt  DateTime @default(now())
+
+  user     User            @relation("UserDefeats", fields: [userId], references: [id], onDelete: Cascade)
+  template MonsterTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+}
