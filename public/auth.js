@@ -1,52 +1,62 @@
-// Helpers
 function showError(msg) {
   const el = document.getElementById('error');
   if (el) el.textContent = msg || '';
 }
 
-function saveAuth(token, user) {
-  localStorage.setItem('token', token);
-  if (user) {
-    if (user.id) localStorage.setItem('userId', user.id);
-    if (user.displayName) localStorage.setItem('displayName', user.displayName);
-    if (user.role) localStorage.setItem('role', user.role);
-    if (user.email) localStorage.setItem('email', user.email);
+function setSessionUser(user) {
+  // Store only username-centric info (no token, no authoritative role)
+  localStorage.setItem('username', user.username || '');
+  localStorage.setItem('email', user.email || '');
+  localStorage.setItem('userId', user.id || '');
+}
+
+
+async function fetchMe() {
+  const res = await fetch('/api/auth/me', { method: 'GET', credentials: 'include' }); 
+  if (!res.ok) throw new Error('Failed to fetch profile');
+  const data = await res.json();
+  return data.user;
+}
+
+async function finishAuthFlow() {
+  try {
+    const user = await fetchMe();
+    setSessionUser(user);
+    if (user.role === 'ADMIN') window.location.href = '/admin/home.html';
+    else window.location.href = '/home.html';
+  } catch (err) {
+    console.error(err);
+    showError('Could not load your profile. Try again.');
   }
 }
 
-function logout() {
+window.logout = async function () {
+  try { await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' }); } catch {}
   localStorage.clear();
   window.location.href = '/login.html';
-}
+};
 
-// LOGIN handler
+// LOGIN
 const loginForm = document.getElementById('loginForm');
 if (loginForm) {
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     showError('');
 
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
+    const username = loginForm.querySelector('#username')?.value.trim();
+    const password = loginForm.querySelector('#password')?.value;
+    if (!username || !password) return showError('Please enter username and password.');
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        credentials: 'include',                                 
+        body: JSON.stringify({ username, password })
       });
-      const data = await res.json();
-
-      if (!res.ok) return showError(data.error || 'Login failed.');
-
-      saveAuth(data.token, data.user);
-
-      // Redirect based on role
-      if (data.user && data.user.role === 'admin') {
-        window.location.href = '/admin/home.html';
-      } else {
-        window.location.href = '/home.html';
-      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return showError(data.message || data.error || 'Login failed.');
+      await finishAuthFlow();
     } catch (err) {
       console.error(err);
       showError('Something went wrong. Try again.');
@@ -54,40 +64,37 @@ if (loginForm) {
   });
 }
 
-// SIGNUP handler
+// SIGNUP
 const signupForm = document.getElementById('signupForm');
 if (signupForm) {
   signupForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     showError('');
 
-    const displayName = document.getElementById('displayName').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-    const confirm = document.getElementById('confirm').value;
+    const username = signupForm.querySelector('#username')?.value.trim();
+    const email = signupForm.querySelector('#email')?.value.trim();
+    const password = signupForm.querySelector('#password')?.value;
+    const confirm  = signupForm.querySelector('#confirm')?.value;
 
+    if (!username) return showError('Please enter a username.');
+    if (!email)    return showError('Please enter an email.');
+    if (!password) return showError('Please enter a password.');
     if (password !== confirm) return showError('Passwords do not match.');
 
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ displayName, email, password })
+        credentials: 'include',
+        body: JSON.stringify({ username, email, password }) 
       });
-      const data = await res.json();
-
-      if (!res.ok) return showError(data.error || 'Sign up failed.');
-
-      saveAuth(data.token, data.user);
-
-      if (data.user && data.user.role === 'admin') {
-        window.location.href = '/admin/home.html';
-      } else {
-        window.location.href = '/home.html';
-      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return showError(data.message || data.error || 'Sign up failed.');
+      await finishAuthFlow();
     } catch (err) {
       console.error(err);
       showError('Something went wrong. Try again.');
     }
   });
 }
+

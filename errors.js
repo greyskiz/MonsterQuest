@@ -23,3 +23,15 @@ module.exports.SQL_ERROR_CODE = {
     UNIQUE_VIOLATION: '23505',
     RAISE_EXCEPTION: 'P0001',
 };
+
+// Express error-handling middleware
+module.exports.errorHandler = function (err, req, res, next) {
+  const status = err.status || err.statusCode || 500;
+  const message = err.message || 'Unknown server error';
+
+  const payload = { error: message };
+  if (process.env.NODE_ENV !== 'production' && err.stack) {
+    payload.stack = err.stack;
+  }
+  res.status(status).json(payload);
+};

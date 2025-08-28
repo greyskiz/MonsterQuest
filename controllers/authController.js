@@ -1,79 +1,91 @@
-const jwt = require('jsonwebtoken');
+require('dotenv').config();
 const bcrypt = require('bcrypt');
-const prisma = require('../../database'); 
-const createError = require('http-errors');
+const jwt = require('jsonwebtoken');
+const authModel = require('../models/authModel');
 
-const JWT_SECRET = process.env.JWT_SECRET;
-const JWT_EXPIRES_IN = '7d';
+const secretKey      = process.env.JWT_SECRET_KEY || 'dev-secret';
+const tokenDuration  = process.env.JWT_EXPIRES_IN || '7d';
+const tokenAlgorithm = process.env.JWT_ALGORITHM || 'HS256';
 
-function signToken(payload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
+function signToken({ id, role }) {
+  return jwt.sign({ sub: id, role }, secretKey, {
+    algorithm: tokenAlgorithm,
+    expiresIn: tokenDuration,
+  });
 }
 
-exports.register = async (req, res, next) => {
+function setAuthCookie(res, token) {
+  res.cookie('token', token, {
+    httpOnly: true,                             
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+    path: '/',
+  });
+}
+
+exports.register = async (req, res) => {
   try {
-    const { displayName, email, password } = req.body;
-    if (!displayName || !email || !password) {
-      throw createError(400, 'displayName, email, and password are required.');
+    const { username, email, password, displayName } = req.body;
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'username, email, and password are required.' });
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) throw createError(409, 'Email already in use.');
+    const dupEmail = await authModel.findByEmail(email);
+    if (dupEmail) return res.status(409).json({ message: 'Email already in use.' });
+
+    const dupUser = await authModel.findByUsername(username);
+    if (dupUser) return res.status(409).json({ message: 'Username already in use.' });
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const user = await prisma.user.create({
-      data: {
-        displayName,
-        email,
-        passwordHash,
-        
-      },
-      select: { id: true, email: true, displayName: true, isAdmin: true }
+    const user = await authModel.createUser({
+      username,
+      email,
+      passwordHash,
+      role: 'USER',
+      displayName: username,  
     });
 
-    const token = signToken({ sub: user.id, role: user.isAdmin ? 'admin' : 'user' });
+    const token = signToken({ id: user.id, role: user.role });
+    setAuthCookie(res, token);                   
 
-    res.status(201).json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName,
-        role: user.isAdmin ? 'admin' : 'user'
-      }
-    });
+    return res.status(201).json({ user });       
   } catch (err) {
-    next(err);
+    console.error('Register error:', err);
+    if (err.code === 'P2002') return res.status(409).json({ message: 'Duplicate field value.' });
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };
 
-exports.login = async (req, res, next) => {
+exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) throw createError(400, 'email and password are required.');
+    const { username, email, password } = req.body;
+    if ((!username && !email) || !password) {
+      return res.status(400).json({ message: 'Provide username or email, and password.' });
+    }
 
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, email: true, displayName: true, isAdmin: true, passwordHash: true }
-    });
-    if (!user) throw createError(401, 'Invalid email or password.');
+    let user = null;
+    if (username) user = await authModel.findByUsername(username);
+    if (!user && email) user = await authModel.findByEmail(email);
+    if (!user) return res.status(401).json({ message: 'Invalid credentials.' });
 
     const ok = await bcrypt.compare(password, user.passwordHash);
-    if (!ok) throw createError(401, 'Invalid email or password.');
+    if (!ok) return res.status(401).json({ message: 'Invalid credentials.' });
 
-    const token = signToken({ sub: user.id, role: user.isAdmin ? 'admin' : 'user' });
+    const token = signToken({ id: user.id, role: user.role });
+    setAuthCookie(res, token);                   
 
-    res.json({
-      token,
-      user: {
-        id: user.id,
-        email: user.email,
-        displayName: user.displayName,
-        role: user.isAdmin ? 'admin' : 'user'
-      }
-    });
+    const safe = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role,
+    };
+    return res.json({ user: safe });             // no token in body
   } catch (err) {
-    next(err);
+    console.error('Login error:', err);
+    return res.status(500).json({ message: 'Internal server error' });
   }
 };

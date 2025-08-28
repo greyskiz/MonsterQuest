@@ -5,8 +5,8 @@ function authRequired(req, res, next) {
   const bearer = req.headers.authorization?.startsWith('Bearer ')
     ? req.headers.authorization.slice(7)
     : null;
-  const token = req.cookies?.token || bearer;
 
+  const token = req.cookies?.token || bearer; // ✅ prefer cookie
   if (!token) return res.status(401).json({ message: 'Missing token' });
 
   try {
@@ -23,4 +23,4 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-module.exports = { authRequired, requireAdmin };  // << explicit object export
+module.exports = { authRequired, requireAdmin };

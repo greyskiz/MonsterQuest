@@ -1,32 +1,31 @@
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 const createHttpError = require('http-errors');
 require('dotenv').config();
 
-const authRoutes = require('./src/routes/authRoutes');
-const monsterRoutes = require('./src/routes/monsterRoutes');
+const authRoutes = require('./routes/auth');
+/* const monsterRoutes = require('./routes/monsterRoutes');
 const sessionRoutes = require('./src/routes/sessionRoutes');
 const partyRoutes = require('./src/routes/partyRoutes');
 const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
-const adminRoutes = require('./src/routes/adminRoutes'); // optional admin-only APIs
+const adminRoutes = require('./src/routes/adminRoutes'); // optional admin-only APIs */
 
-const errorHandler = require('./errors');
+const { errorHandler } = require('./errors'); // <-- import the middleware properly
 
 const app = express();
 
-// Parse JSON bodies
 app.use(express.json());
-
-// Serve static frontend from /public
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ---- API ROUTES ----
 app.use('/api/auth', authRoutes);
-app.use('/api/monsters', monsterRoutes);
+/* app.use('/api/monsters', monsterRoutes);
 app.use('/api/sessions', sessionRoutes);
 app.use('/api/parties', partyRoutes);
 app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminRoutes); */
 
 // 404 for unknown endpoints
 app.use((req, res, next) => {
@@ -37,4 +36,3 @@ app.use((req, res, next) => {
 app.use(errorHandler);
 
 module.exports = app;
-

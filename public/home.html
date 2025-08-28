@@ -4,19 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Home – MonsterQuest</title>
-  <link rel="stylesheet" href="main.css" />
+  <link rel="stylesheet" href="/main.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Welcome, <span id="username"></span></h1>
+    <h1>Welcome, <span id="usernameText"></span></h1>
     <p>You are logged in as a normal user.</p>
     <button onclick="logout()">Logout</button>
   </div>
 
-  <script src="auth.js"></script>
+  <script src="/auth.js"></script>
   <script>
-    document.getElementById("username").textContent =
-      localStorage.getItem("displayName") || "User";
+    // Populate name from the server (cookie auth)
+    document.addEventListener('DOMContentLoaded', async () => {
+      try {
+        const res = await fetch('/api/auth/me', { credentials: 'include' });
+        if (!res.ok) throw new Error('unauthorized');
+        const { user } = await res.json();
+        const el = document.getElementById('usernameText');
+        if (el) el.textContent = user.username || 'User';
+      } catch {
+        // Not logged in -> send to login
+        window.location.href = '/login.html';
+      }
+    });
   </script>
 </body>
 </html>
