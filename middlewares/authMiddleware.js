@@ -1,25 +1,26 @@
 const jwt = require('jsonwebtoken');
-const createError = require('http-errors');
+const secretKey = process.env.JWT_SECRET_KEY || 'dev-secret';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+function authRequired(req, res, next) {
+  const bearer = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.slice(7)
+    : null;
+  const token = req.cookies?.token || bearer;
 
-module.exports = function auth(requiredRole = null) {
-  return (req, res, next) => {
-    try {
-      const header = req.headers.authorization || '';
-      const token = header.startsWith('Bearer ') ? header.slice(7) : null;
-      if (!token) throw createError(401, 'Missing token.');
+  if (!token) return res.status(401).json({ message: 'Missing token' });
 
-      const payload = jwt.verify(token, JWT_SECRET);
-      req.user = { id: payload.sub, role: payload.role };
+  try {
+    const payload = jwt.verify(token, secretKey);
+    req.user = { id: payload.sub || payload.id, role: payload.role };
+    next();
+  } catch {
+    return res.status(401).json({ message: 'Invalid or expired token' });
+  }
+}
 
-      if (requiredRole && payload.role !== requiredRole) {
-        throw createError(403, 'Forbidden.');
-      }
+function requireAdmin(req, res, next) {
+  if (req.user?.role !== 'ADMIN') return res.status(403).json({ message: 'Forbidden' });
+  next();
+}
 
-      next();
-    } catch (err) {
-      next(err);
-    }
-  };
-};
+module.exports = { authRequired, requireAdmin };  // << explicit object export
