@@ -9,11 +9,11 @@ datasource db {
 
 model User {
   id           String   @id @default(uuid())
+  username     String   @unique
   email        String   @unique
-  username     String?  @unique
   passwordHash String
   displayName  String
-  role         String   @default("USER")
+  role         String   // 'USER' or 'ADMIN'
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
@@ -50,13 +50,14 @@ model PartyMember {
 }
 
 model MonsterTemplate {
-  id            String    @id @default(uuid())
-  name          String
-  baseHpMinutes Int
-  imageUrl      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
+  id        String   @id @default(uuid())
+  name      String
+  tier      String   // "QUICK" | "STANDARD" | "LONG"  (string is fine for now)
+  minutes   Int
+  baseCoins Int?     // optional
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
   encounters Encounter[]
   defeats    UserMonsterDefeat[]  // back-rel for UserMonsterDefeat.template
 }

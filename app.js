@@ -1,38 +1,48 @@
+// app.js
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
-const createHttpError = require('http-errors');
-require('dotenv').config();
+const createError = require('http-errors');
+require('dotenv').config({ quiet: true });
 
 const authRoutes = require('./routes/auth');
-/* const monsterRoutes = require('./routes/monsterRoutes');
-const sessionRoutes = require('./src/routes/sessionRoutes');
-const partyRoutes = require('./src/routes/partyRoutes');
-const leaderboardRoutes = require('./src/routes/leaderboardRoutes');
-const adminRoutes = require('./src/routes/adminRoutes'); // optional admin-only APIs */
-
-const { errorHandler } = require('./errors'); // <-- import the middleware properly
+const usersRoutes = require('./routes/users');
+const adminRoutes = require('./routes/admin');
+// If you already have monster APIs, keep this:
+const monsterRoutes = require('./routes/monster'); // optional
 
 const app = express();
 
+// Body & cookies
 app.use(express.json());
 app.use(cookieParser());
+
+// Static frontend
 app.use(express.static(path.join(__dirname, 'public')));
 
-// ---- API ROUTES ----
+// ---- API routes ----
 app.use('/api/auth', authRoutes);
-/* app.use('/api/monsters', monsterRoutes);
-app.use('/api/sessions', sessionRoutes);
-app.use('/api/parties', partyRoutes);
-app.use('/api/leaderboard', leaderboardRoutes);
-app.use('/api/admin', adminRoutes); */
+app.use('/api/users', usersRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/monster', monsterRoutes); // optional
 
 // 404 for unknown endpoints
 app.use((req, res, next) => {
-  next(createHttpError(404, `Unknown resource: ${req.method} ${req.originalUrl}`));
+  next(createError(404, `Unknown resource: ${req.method} ${req.originalUrl}`));
 });
 
 // Centralized error handler
-app.use(errorHandler);
+// (If you prefer your own ./errors.js, replace this block with `app.use(errorHandler)`)
+app.use((err, req, res, next) => {
+  const status = err.status || 500;
+  const message =
+    err.message || (status === 404 ? 'Not Found' : 'Internal server error');
+
+  if (status >= 500) {
+    // Avoid logging secrets from req; keep it simple
+    console.error(err);
+  }
+  res.status(status).json({ message });
+});
 
 module.exports = app;

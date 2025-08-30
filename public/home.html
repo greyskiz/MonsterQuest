@@ -1,32 +1,44 @@
+<!-- public/home.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Home – MonsterQuest</title>
+  <title>Home — MonsterQuest</title>
   <link rel="stylesheet" href="/main.css" />
 </head>
 <body>
   <div class="container">
-    <h1>Welcome, <span id="usernameText"></span></h1>
-    <p>You are logged in as a normal user.</p>
-    <button onclick="logout()">Logout</button>
+    <h1>Welcome, <span id="usernameText">...</span></h1>
+    <nav style="margin: 12px 0;">
+      <a href="/profile.html">Profile</a> |
+      <a href="/change-password.html">Change Password</a> |
+      <a href="/delete-account.html">Delete Account</a>
+    </nav>
+    <button id="logoutBtn">Logout</button>
+    <p id="error" class="error"></p>
   </div>
 
   <script src="/auth.js"></script>
   <script>
-    // Populate name from the server (cookie auth)
     document.addEventListener('DOMContentLoaded', async () => {
       try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' });
-        if (!res.ok) throw new Error('unauthorized');
+        const res = await fetch('/api/users/user', { credentials: 'include' });
+        if (!res.ok) throw new Error('Not logged in');
         const { user } = await res.json();
-        const el = document.getElementById('usernameText');
-        if (el) el.textContent = user.username || 'User';
+
+        if (user.role === 'ADMIN') {
+          window.location.replace('/admin/home.html');
+          return;
+        }
+
+        document.getElementById('usernameText').textContent = user.username || 'User';
       } catch {
-        // Not logged in -> send to login
         window.location.href = '/login.html';
+        return;
       }
+
+      document.getElementById('logoutBtn')?.addEventListener('click', () => logout());
     });
   </script>
 </body>
