@@ -1,0 +1,58 @@
+<!-- public/admin/home.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin — MonsterQuest</title>
+  <link rel="stylesheet" href="/main.css" />
+  <style>
+    .grid{display:grid;gap:16px;grid-template-columns:1fr}
+    @media(min-width:900px){.grid{grid-template-columns:1fr 1fr}}
+    .card{border:1px solid #ddd;border-radius:10px;padding:16px;background:#fff}
+    .muted{color:#666;font-size:.9rem}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Admin Dashboard</h1>
+    <p class="muted">Only admins should reach this page.</p>
+
+    <div class="grid" style="margin:16px 0;">
+      <a class="card" href="/admin/monsters.html">
+        <h2>Manage Monsters</h2>
+        <p class="muted">Create, list, delete monsters.</p>
+      </a>
+
+      <a class="card" href="/admin/store.html">
+        <h2>Manage Store</h2>
+        <p class="muted">Items, cosmetics, pricing (stub).</p>
+      </a>
+
+      <a class="card" href="/admin/users.html">
+        <h2>Manage Users</h2>
+        <p class="muted">Promote/demote (stub).</p>
+      </a>
+
+      <a class="card" href="/admin/settings.html">
+        <h2>Settings</h2>
+        <p class="muted">App banners, misc (stub).</p>
+      </a>
+    </div>
+
+    <button id="logoutBtn">Logout</button>
+    <p id="error" class="error"></p>
+  </div>
+
+  <script src="/auth.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+      const res = await fetch('/api/users/user', { credentials: 'include' });
+      if (!res.ok) return (window.location.href = '/login.html');
+      const { user } = await res.json();
+      if (user.role !== 'ADMIN') return (window.location.href = '/home.html');
+      document.getElementById('logoutBtn')?.addEventListener('click', () => logout());
+    });
+  </script>
+</body>
+</html>

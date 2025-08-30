@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Delete Account — MonsterQuest</title>
+  <link rel="stylesheet" href="/main.css"/>
+</head>
+<body>
+  <div class="container">
+    <h1>Delete Account</h1>
+    <p>This will permanently delete your account. This action cannot be undone.</p>
+
+    <form id="deleteForm">
+      <label for="confirmText">Type DELETE to confirm</label>
+      <input id="confirmText" name="confirmText" type="text" placeholder="DELETE" required />
+      <button type="submit" class="danger">Delete my account</button>
+    </form>
+
+    <p style="margin-top:10px;">
+      <a href="/home.html">Back to Home</a>
+    </p>
+
+    <p id="error" class="error"></p>
+  </div>
+
+  <script src="/user.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      loadCurrentUser({ onFailRedirect: '/login.html' });
+
+      document.getElementById('deleteForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const val = document.getElementById('confirmText').value.trim();
+        if (val !== 'DELETE') {
+          showError('Please type DELETE exactly to confirm.');
+          return;
+        }
+        deleteAccount();
+      });
+    });
+  </script>
+</body>
+</html>

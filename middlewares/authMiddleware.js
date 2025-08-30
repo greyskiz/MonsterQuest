@@ -1,19 +1,27 @@
+// middlewares/authMiddleware.js
 const jwt = require('jsonwebtoken');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 const secretKey = process.env.JWT_SECRET_KEY || 'dev-secret';
 
-function authRequired(req, res, next) {
+async function authRequired(req, res, next) {
   const bearer = req.headers.authorization?.startsWith('Bearer ')
     ? req.headers.authorization.slice(7)
     : null;
-
-  const token = req.cookies?.token || bearer; // ✅ prefer cookie
+  const token = req.cookies?.token || bearer;
   if (!token) return res.status(401).json({ message: 'Missing token' });
 
   try {
-    const payload = jwt.verify(token, secretKey);
-    req.user = { id: payload.sub || payload.id, role: payload.role };
+    const payload = jwt.verify(token, secretKey); // { sub }
+    const user = await prisma.user.findUnique({
+      where: { id: payload.sub || payload.id },
+      select: { id: true, username: true, email: true, displayName: true, role: true },
+    });
+    if (!user) return res.status(401).json({ message: 'User not found' });
+
+    req.user = user; // fresh user each request
     next();
-  } catch {
+  } catch (err) {
     return res.status(401).json({ message: 'Invalid or expired token' });
   }
 }
