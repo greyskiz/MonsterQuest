@@ -1,45 +1,94 @@
-<!-- public/home.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Home — MonsterQuest</title>
-  <link rel="stylesheet" href="/main.css" />
+  <link rel="stylesheet" href="/main.css"/>
+  <style>
+    .wrap{max-width:880px;margin:40px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #eef1f4;border-radius:16px;box-shadow:0 6px 26px rgba(16,24,40,.06);padding:20px;margin:14px 0}
+    .wide{display:grid;grid-template-columns:180px 1fr 120px;gap:16px;align-items:center}
+    .img{width:100%;height:120px;object-fit:cover;border-radius:12px;border:1px solid #e4eaef}
+    .bar{display:flex;align-items:center;gap:12px;justify-content:space-between}
+    .btn{background:#2ea44f;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn-muted{background:#eef3f8;color:#333}
+    .error{color:#c62828}
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Welcome, <span id="usernameText">...</span></h1>
-    <nav style="margin: 12px 0;">
-      <a href="/profile.html">Profile</a> |
-      <a href="/change-password.html">Change Password</a> |
-      <a href="/delete-account.html">Delete Account</a>
-    </nav>
-    <button id="logoutBtn">Logout</button>
+  <div class="wrap">
+    <div class="bar">
+      <h1 id="welcome" style="margin:0;">Welcome</h1>
+      <a href="/settings.html">Settings</a>
+    </div>
+
+    <div class="bar" style="margin:16px 0;">
+      <div>
+        <label>Tier</label>
+        <select id="tier">
+          <option value="ALL">All</option>
+          <option value="QUICK">Quick (5 / 10 / 15)</option>
+          <option value="STANDARD" selected>Standard (25 / 30 / 45)</option>
+          <option value="LONG">Long (60 / 90 / 120)</option>
+        </select>
+        <label style="margin-left:8px;">Scope</label>
+        <select id="scope">
+          <option value="ALL">All</option>
+          <option value="SOLO" selected>Solo</option>
+          <option value="PARTY">Party</option>
+        </select>
+      </div>
+      <button id="refresh" class="btn">Refresh</button>
+    </div>
+
+    <div id="list"></div>
+
+    <button id="logoutBtn" class="btn btn-muted">Logout</button>
     <p id="error" class="error"></p>
   </div>
 
   <script src="/auth.js"></script>
+  <script src="home.js" defer></script>
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      try {
-        const res = await fetch('/api/users/user', { credentials: 'include' });
-        if (!res.ok) throw new Error('Not logged in');
-        const { user } = await res.json();
+    const $ = (s)=>document.querySelector(s);
+    const err = $('#error');
+    const tier = $('#tier'); const scope = $('#scope'); const list = $('#list');
 
-        if (user.role === 'ADMIN') {
-          window.location.replace('/admin/home.html');
-          return;
-        }
+    async function api(path) {
+      const res = await fetch(path, { credentials:'include' });
+      if (!res.ok) throw new Error('Failed to load monsters');
+      return res.json();
+    }
 
-        document.getElementById('usernameText').textContent = user.username || 'User';
-      } catch {
-        window.location.href = '/login.html';
-        return;
-      }
+    async function load() {
+      err.textContent = '';
+      const qs = new URLSearchParams();
+      if (tier.value !== 'ALL')  qs.set('tier', tier.value);   
+      if (scope.value !== 'ALL') qs.set('scope', scope.value); 
+      const { monsters } = await api('/api/monster?'+qs.toString());
 
-      document.getElementById('logoutBtn')?.addEventListener('click', () => logout());
-    });
+      list.innerHTML = monsters.length
+        ? monsters.map(m => `
+            <div class="card wide">
+              <img class="img" src="${m.imageUrl || '/assets/placeholder.png'}" alt="">
+              <div>
+                <h3 style="margin:0 0 6px;">${m.name}</h3>
+                <div style="color:#666;">${m.tier} • ${m.minutes} min • ${m.scope}</div>
+              </div>
+              <a class="btn" href="/timer/timer.html?name=${encodeURIComponent(m.name)}&minutes=${m.minutes}&img=${encodeURIComponent(m.imageUrl||'')}">Start Session</a>
+            </div>`).join('')
+        : `<div class="card">No monsters yet. Ask an admin to add some.</div>`;
+    }
+
+    $('#refresh').addEventListener('click', () => load().catch(e=>err.textContent=e.message));
+    $('#logoutBtn').addEventListener('click', () => logout());
+
+    (async ()=>{ try{
+      const u = localStorage.getItem('username') || '';
+      if (u) $('#welcome').textContent = 'Welcome, ' + u;
+      await load();
+    }catch(e){ err.textContent=e.message; }})();
   </script>
 </body>
 </html>
