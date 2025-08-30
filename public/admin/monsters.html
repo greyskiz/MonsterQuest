@@ -3,142 +3,106 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Manage Monsters — MonsterQuest</title>
+  <title>Manage Monsters</title>
   <link rel="stylesheet" href="/main.css" />
   <style>
-    :root {
-      --panel: #fff;
-      --muted: #6b7280;
-      --border: #eef1f4;
-      --shadow: 0 6px 26px rgba(16,24,40,.06), 0 2px 6px rgba(16,24,40,.04);
-      --radius: 16px;
-    }
-    .wrap      { max-width: 1100px; margin: 40px auto; padding: 0 16px; }
-    .heading   { text-align:center; margin-bottom: 18px; }
-    .heading h1{ font-size: 40px; margin:0; letter-spacing:.3px; }
-    .heading p { color:var(--muted); margin-top:10px; }
-
-    .grid      { display:grid; gap:16px; grid-template-columns: 380px 1fr; }
-    .panel     { background:var(--panel); border-radius:var(--radius); box-shadow:var(--shadow); }
-    .panel-body{ padding:18px; }
-    .panel h2  { margin:0 0 12px; font-size:16px; letter-spacing:.04em; color:#637381; text-transform:uppercase; }
-
-    .field     { margin-bottom: 12px; }
-    label      { display:block; margin:0 0 6px; font-weight:600; font-size:14px; }
-    input[type="text"],
-    input[type="url"],
-    select     { width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; outline:0; }
-
-    .btn-primary{ background:#22c55e; color:#fff; border:0; padding:12px 16px; border-radius:12px; cursor:pointer; width:100%; font-weight:600; }
-    .btn-danger { background:#ef4444; color:#fff; border:0; padding:8px 10px; border-radius:8px; cursor:pointer; }
-
-    .error     { color:#c0392b; margin-top:10px; min-height:18px; }
-
-    table      { width:100%; border-collapse:collapse; }
-    thead th   { text-transform:uppercase; letter-spacing:.04em; font-size:12px; color:var(--muted); }
-    th, td     { padding:12px 10px; border-bottom:1px solid var(--border); text-align:left; }
-    .tag       { display:inline-block; font-size:12px; padding:2px 8px; border-radius:999px; background:#eef2ff; color:#364fc7; }
-
-    #previewBox{ height:200px; border:1px dashed var(--border); display:flex; align-items:center; justify-content:center; border-radius:14px; background:#fafafa; }
-    #previewImg{ max-height:100%; border-radius:12px; }
-    .back      { margin-top:14px; text-align:center; }
-    .back a    { color:#475569; text-decoration:underline; }
-    @media (max-width: 920px) { .grid{ grid-template-columns: 1fr; } }
+    .wrap{max-width:980px;margin:40px auto;padding:0 16px}
+    .grid{display:grid;grid-template-columns:420px 1fr;gap:24px}
+    .panel{background:#fff;border:1px solid #eef1f4;border-radius:16px;box-shadow:0 6px 26px rgba(16,24,40,.06);padding:20px}
+    .field{margin:12px 0}
+    label{display:block;font-weight:600;margin-bottom:6px}
+    input,select{width:100%;padding:10px;border:1px solid #d9e1ea;border-radius:10px}
+    .btn{background:#2ea44f;color:#fff;border:none;border-radius:10px;padding:12px 16px;font-weight:700;cursor:pointer}
+    .btn-muted{background:#eef3f8;color:#333}
+    .list .row{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 120px;gap:12px;align-items:center;border-bottom:1px solid #eef1f4;padding:10px 0}
+    .thumb{width:72px;height:48px;object-fit:cover;border-radius:8px;border:1px solid #e4eaef}
+    .error{color:#c62828;margin-top:10px}
+    .bar{display:flex;gap:12px;align-items:center}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="heading">
-      <h1>Manage Monsters</h1>
-      <p>Create, list, and delete monsters for Solo/Party modes.</p>
+    <div class="bar">
+      <a href="/admin/home.html" class="btn btn-muted">← Back to Admin</a>
+      <h1 style="margin:0;">Manage Monsters</h1>
     </div>
 
-    <div class="grid">
-      <!-- Left: Create -->
+    <div class="grid" style="margin-top:16px">
+      <!-- Create -->
       <div class="panel">
-        <div class="panel-body">
-          <h2>Create</h2>
-          <form id="monsterForm" novalidate>
-            <div class="field">
-              <label for="monsterName">Name</label>
-              <input id="monsterName" type="text" placeholder="Slime" required />
-            </div>
-
-            <div class="field">
-              <label for="tier">Tier</label>
-              <select id="tier" required>
-                <option value="QUICK" selected>Quick (5 / 10 / 15)</option>
-                <option value="STANDARD">Standard (30 / 40 / 45)</option>
-                <option value="LONG">Long (60 / 90 / 120)</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="minutes">Session Minutes (HP)</label>
-              <select id="minutes" required>
-                <option value="5" selected>5 min</option>
-                <option value="10">10 min</option>
-                <option value="15">15 min</option>
-                <option value="30">30 min</option>
-                <option value="40">40 min</option>
-                <option value="45">45 min</option>
-                <option value="60">60 min</option>
-                <option value="90">90 min</option>
-                <option value="120">120 min</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="scope">Scope</label>
-              <select id="scope" required>
-                <option value="SOLO" selected>Solo</option>
-                <option value="PARTY">Party</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="imageUrl">Image URL (required)</label>
-              <input id="imageUrl" type="url" placeholder="https://example.com/monster.png" required />
-            </div>
-
-            <div class="field">
-              <label>Preview</label>
-              <div id="previewBox">
-                <img id="previewImg" alt="preview"/>
-              </div>
-            </div>
-
-            <button class="btn-primary" type="submit">Create Monster</button>
-            <p id="error" class="error"></p>
-          </form>
+        <h3>Create Monster</h3>
+        <div class="field">
+          <label>Name</label>
+          <input id="name" placeholder="Slime"/>
         </div>
+        <div class="field">
+          <label>Tier</label>
+          <select id="tier">
+            <option value="QUICK">Quick (5 / 10 / 15)</option>
+            <option value="STANDARD">Standard (25 / 30 / 45)</option>
+            <option value="LONG">Long (60 / 90 / 120)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Session Minutes (HP)</label>
+          <select id="minutes">
+            <option value="5">5</option>
+            <option value="10">10</option>
+            <option value="15">15</option>
+            <option value="25">25</option>
+            <option value="30">30</option>
+            <option value="45">45</option>
+            <option value="60">60</option>
+            <option value="90">90</option>
+            <option value="120">120</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Scope</label>
+          <select id="scope">
+            <option value="SOLO">Solo</option>
+            <option value="PARTY">Party</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Image URL (required)</label>
+          <input id="imageUrl" placeholder="https://example.com/monster.png"/>
+        </div>
+        <div class="field">
+          <label>Preview</label>
+          <div class="panel" style="height:160px;display:flex;align-items:center;justify-content:center;">
+            <img id="previewImg" src="/assets/placeholder.png" alt="preview" style="max-height:140px;border-radius:12px;border:1px solid #e4eaef"/>
+          </div>
+        </div>
+        <button id="createBtn" class="btn" style="width:100%;">Create Monster</button>
+        <p id="error" class="error"></p>
       </div>
 
-      <!-- Right: List -->
+      <!-- List -->
       <div class="panel">
-        <div class="panel-body">
-          <h2>List</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Monster</th>
-                <th>Tier</th>
-                <th>Minutes</th>
-                <th>Scope</th>
-                <th>Image</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody id="listBody">
-              <tr><td colspan="6" style="color:#6b7280;">No monsters yet.</td></tr>
-            </tbody>
-          </table>
+        <div class="bar" style="justify-content:space-between;margin-bottom:8px;">
+          <h3 style="margin:0;">Current Monsters</h3>
+          <div>
+            <select id="fltTier">
+              <option value="ALL">All tiers</option>
+              <option value="QUICK">QUICK</option>
+              <option value="STANDARD">STANDARD</option>
+              <option value="LONG">LONG</option>
+            </select>
+            <select id="fltScope">
+              <option value="ALL">All scopes</option>
+              <option value="SOLO">SOLO</option>
+              <option value="PARTY">PARTY</option>
+            </select>
+            <button id="refreshBtn" class="btn btn-muted">Refresh</button>
+          </div>
         </div>
-      </div>
-    </div>
 
-    <div class="back">
-      <a href="/admin/home.html">← Back to Admin</a>
+        <div class="row" style="font-weight:700;border-top:1px solid #eef1f4;">
+          <div>Monster</div><div>Tier</div><div>Minutes</div><div>Scope</div><div>Actions</div>
+        </div>
+        <div id="list" class="list"></div>
+      </div>
     </div>
   </div>
 

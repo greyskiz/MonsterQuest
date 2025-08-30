@@ -3,47 +3,58 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Study Timer – MonsterQuest</title>
-<link rel="stylesheet" href="/main.css" />
+  <title>Study Session</title>
+  <link rel="stylesheet" href="/main.css"/>
+  <style>
+    .wrap{max-width:760px;margin:40px auto;padding:0 16px}
+    .timer{font-size:80px;font-weight:800;text-align:center;margin:16px 0}
+    .bar{display:flex;gap:12px;justify-content:center}
+    .img{height:120px;border-radius:12px;border:1px solid #e4eaef}
+    .btn{background:#2ea44f;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn-muted{background:#eef3f8;color:#333}
+  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Study Timer</h1>
-
-    <!-- Show current monster info -->
-    <div id="current" style="margin: 10px 0; font-weight:bold;">
-      Loading current monster...
+  <div class="wrap">
+    <a class="btn btn-muted" href="/home.html">← Back</a>
+    <div class="card" style="display:flex;gap:16px;align-items:center;margin-top:16px;">
+      <img id="img" class="img" src="/assets/placeholder.png" alt="">
+      <h2 id="title" style="margin:0;">...</h2>
     </div>
-
-    <!-- Timer selection -->
-    <div style="margin-bottom: 15px;">
-      <button class="tbtn" data-min="10">10 min</button>
-      <button class="tbtn" data-min="20">20 min</button>
-      <button class="tbtn" data-min="30">30 min</button>
-      <button class="tbtn" data-min="60">1 h</button>
-      <button class="tbtn" data-min="120">2 h</button>
+    <div id="display" class="timer">00:00</div>
+    <div class="bar">
+      <button id="start" class="btn">Start</button>
+      <button id="pause" class="btn btn-muted">Pause</button>
+      <button id="reset" class="btn btn-muted">Reset</button>
+      <button id="finish" class="btn btn-muted">Finish early</button>
     </div>
-
-    <!-- Countdown display -->
-    <h2 id="countdown">00:00</h2>
-
-    <!-- Controls -->
-    <div style="margin-top: 15px;">
-      <button id="startBtn">Start</button>
-      <button id="stopBtn" disabled>Stop</button>
-    </div>
-
-    <!-- Status message -->
-    <p id="msg" style="margin-top: 10px; color:#2c3e50;"></p>
-
-    <!-- Nav -->
-    <p style="margin-top:20px;">
-      <a href="/home.html">Back to Home</a>
-    </p>
   </div>
 
-  <!-- Scripts -->
-<script src="/auth.js"></script>
-<script src="/timer/timer.js"></script>
+  <script>
+    const qs = new URLSearchParams(location.search);
+    const name = qs.get('name') || 'Session';
+    const minutes = parseInt(qs.get('minutes')||'0',10) || 25;
+    const img = qs.get('img') || '';
+    document.getElementById('title').textContent = name;
+    if (img) document.getElementById('img').src = img;
+
+    const disp = document.getElementById('display');
+    let remaining = minutes * 60;
+    let t=null;
+
+    function fmt(s){ const m=Math.floor(s/60), ss=s%60; return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
+    function tick(){ remaining=Math.max(0,remaining-1); disp.textContent=fmt(remaining); if(remaining===0) stop();}
+    function start(){ if(!t) t=setInterval(tick,1000); }
+    function stop(){ if(t){ clearInterval(t); t=null; } }
+    function reset(){ stop(); remaining = minutes*60; disp.textContent=fmt(remaining); }
+    function finish(){ stop(); remaining=0; disp.textContent='00:00'; }
+
+    document.getElementById('start').onclick=start;
+    document.getElementById('pause').onclick=stop;
+    document.getElementById('reset').onclick=reset;
+    document.getElementById('finish').onclick=finish;
+
+    reset();
+  </script>
 </body>
 </html>

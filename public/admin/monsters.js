@@ -1,105 +1,93 @@
-const $ = (sel) => document.querySelector(sel);
-const err = (msg) => { const e = $('#error'); if (e) e.textContent = msg || ''; };
+const $ = (s) => document.querySelector(s);
 
-function escapeHtml(s=''){return s.replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));}
-function escapeAttr(s=''){return s.replace(/"/g,'&quot;');}
+const listEl   = $('#list');
+const errEl    = $('#error');
 
-// --- Image preview wireup ---
-(function wirePreview(){
-  const input = $('#imageUrl');
-  const img   = $('#previewImg');
-  if (!input || !img) return;
-  const apply = () => { img.src = input.value.trim(); };
-  input.addEventListener('input', apply);
-  input.addEventListener('blur', apply);
-})();
+const nameEl   = $('#name');
+const tierEl   = $('#tier');
+const minEl    = $('#minutes');
+const scopeEl  = $('#scope');
+const imgEl    = $('#imageUrl');
+const prevImg  = $('#previewImg');
 
-// --- Fetch all monsters ---
-async function fetchMonsters(){
-  const res = await fetch('/api/monster', { credentials:'include' });
-  if (!res.ok) throw new Error('Failed to load monsters');
-  return res.json();
-}
+const fltTier  = $('#fltTier');
+const fltScope = $('#fltScope');
 
-// --- Render table ---
-function renderTable(items){
-  const body = $('#listBody');
-  if (!body) return;
+function showError(msg){ errEl.textContent = msg || ''; }
 
-  if (!items || items.length === 0){
-    body.innerHTML = `<tr><td colspan="6" style="color:#6b7280;">No monsters yet.</td></tr>`;
-    return;
-  }
-
-  body.innerHTML = items.map(m => `
-    <tr>
-      <td>${escapeHtml(m.name)}</td>
-      <td>${escapeHtml(m.tier)}</td>
-      <td>${m.minutes}</td>
-      <td><span class="tag">${escapeHtml(m.scope)}</span></td>
-      <td>
-        ${m.imageUrl ? `<img src="${escapeAttr(m.imageUrl)}" alt="" style="height:38px;border-radius:8px;">` : '-'}
-      </td>
-      <td><button class="btn-danger" data-id="${m.id}">Delete</button></td>
-    </tr>
-  `).join('');
-
-  body.querySelectorAll('button[data-id]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const id = btn.getAttribute('data-id');
-      if (!confirm('Delete this monster?')) return;
-      const res = await fetch(`/api/monster/${id}`, { method:'DELETE', credentials:'include' });
-      if (!res.ok){
-        const j = await res.json().catch(()=>({}));
-        return err(j.message || 'Delete failed');
-      }
-      refreshList();
-    });
-  });
-}
-
-async function refreshList(){
-  try {
-    err('');
-    const items = await fetchMonsters();
-    renderTable(items);
-  } catch (e) {
-    err(e.message || 'Could not load list');
-  }
-}
-
-// --- Create monster ---
-$('#monsterForm')?.addEventListener('submit', async (e) => {
-  e.preventDefault();
-  err('');
-
-  const name     = $('#monsterName')?.value.trim();
-  const tier     = $('#tier')?.value;               // QUICK | STANDARD | LONG
-  const minutes  = parseInt($('#minutes')?.value,10);
-  const scope    = $('#scope')?.value;              // SOLO | PARTY
-  const imageUrl = $('#imageUrl')?.value.trim();
-
-  if (!name || !tier || !minutes || !scope || !imageUrl){
-    return err('name, tier, minutes, scope, and image are required.');
-  }
-
-  try {
-    const res = await fetch('/api/monster', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ name, tier, minutes, scope, imageUrl }),
-    });
-    const data = await res.json().catch(()=> ({}));
-    if (!res.ok) return err(data.message || 'Create failed');
-
-    // Reset only the name (keep tier, minutes, etc. for faster entry)
-    $('#monsterName').value = '';
-    refreshList();
-  } catch {
-    err('Create failed');
-  }
+imgEl.addEventListener('input', () => {
+  prevImg.src = imgEl.value || '/assets/placeholder.png';
 });
 
-// Initial load
-document.addEventListener('DOMContentLoaded', refreshList);
+async function api(path, opts = {}) {
+  const res = await fetch(path, { credentials: 'include', ...opts });
+  if (!res.ok) {
+    let msg = 'Request failed';
+    try { const d = await res.json(); msg = d.message || msg; } catch {}
+    throw new Error(msg);
+  }
+  return res.json().catch(() => ({}));
+}
+
+async function load() {
+  showError('');
+  const qs = new URLSearchParams();
+  if (fltTier.value !== 'ALL')  qs.set('tier', fltTier.value);
+  if (fltScope.value !== 'ALL') qs.set('scope', fltScope.value);
+
+  const { monsters } = await api(`/api/monster/admin?${qs.toString()}`);
+
+  listEl.innerHTML = monsters.length
+    ? monsters.map(m => `
+      <div class="row">
+        <div>${m.name}</div>
+        <div>${m.tier}</div>
+        <div>${m.minutes} min</div>
+        <div>${m.scope}</div>
+        <div>
+          <button class="btn btn-muted" data-del="${m.id}">Delete</button>
+        </div>
+      </div>`).join('')
+    : `<div class="row"><div style="grid-column:1/6;color:#666;">No monsters yet.</div></div>`;
+}
+
+$('#refreshBtn').addEventListener('click', () => load());
+
+listEl.addEventListener('click', async (e) => {
+  const id = e.target.dataset.del;
+  if (!id) return;
+  if (!confirm('Delete this monster?')) return;
+  try {
+    showError('');
+    await fetch(`/api/monster/${id}`, { method: 'DELETE', credentials: 'include' });
+    await load();
+  } catch (err) { showError(err.message); }
+});
+
+$('#createBtn').addEventListener('click', async () => {
+  try {
+    showError('');
+    const body = {
+      name: nameEl.value.trim(),
+      tier: tierEl.value,               
+      minutes: Number(minEl.value),
+      scope: scopeEl.value,             
+      imageUrl: imgEl.value.trim(),
+    };
+    if (!body.name || !body.tier || !body.minutes || !body.scope || !body.imageUrl) {
+      return showError('Please fill all required fields.');
+    }
+    await api('/api/monster', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    nameEl.value = '';
+    imgEl.value = '';
+    prevImg.src = '/assets/placeholder.png';
+    await load();
+  } catch (err) { showError(err.message); }
+});
+
+// initial
+load().catch(err => showError(err.message));

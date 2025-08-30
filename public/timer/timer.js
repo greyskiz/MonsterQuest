@@ -1,109 +1,67 @@
-let durationMin = 0;
-let remainingSec = 0;
-let startedAt = null;
-let timerId = null;
-let currentMonster = null;
+(function () {
+  let secs = 0;
+  let remaining = 0;
+  let t = null;
+  const clock = document.getElementById('clock');
+  const mName = document.getElementById('mName');
+  const mImg  = document.getElementById('mImg');
+  const mMeta = document.getElementById('mMeta');
+  const done  = document.getElementById('done');
 
-const msg = (t) => { document.getElementById('msg').textContent = t || ''; };
-const fmt = (s) => {
-  const mm = String(Math.floor(s / 60)).padStart(2, '0');
-  const ss = String(s % 60).padStart(2, '0');
-  return `${mm}:${ss}`;
-};
-
-async function fetchCurrentMonster() {
-  const res = await fetch('/api/monsters/current');
-  const data = await res.json();
-  currentMonster = data.monster || null;
-  const el = document.getElementById('current');
-  if (currentMonster) {
-    el.textContent = `Current Monster: ${currentMonster.name} (${currentMonster.hpRemainingMinutes}/${currentMonster.hpTotalMinutes} min)`;
-  } else {
-    el.textContent = 'No active monster. Ask an admin to activate one.';
+  function fmt(s) {
+    const m = Math.floor(s / 60).toString().padStart(2, '0');
+    const r = (s % 60).toString().padStart(2, '0');
+    return `${m}:${r}`;
   }
-}
 
-function bindButtons() {
-  document.querySelectorAll('.tbtn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      durationMin = parseInt(btn.dataset.min, 10);
-      remainingSec = durationMin * 60;
-      document.getElementById('countdown').textContent = fmt(remainingSec);
-      msg(`Selected ${durationMin} minutes.`);
-    });
-  });
+  function render() { clock.textContent = fmt(remaining); }
 
-  const startBtn = document.getElementById('startBtn');
-  const stopBtn = document.getElementById('stopBtn');
-
-  startBtn.addEventListener('click', async () => {
-    if (!durationMin) return msg('Select a duration first.');
-    if (!currentMonster) return msg('No active monster.');
-
-    startedAt = new Date();
-    startBtn.disabled = true;
-    stopBtn.disabled = false;
-    msg('Timer started.');
-
-    timerId = setInterval(async () => {
-      remainingSec -= 1;
-      document.getElementById('countdown').textContent = fmt(Math.max(remainingSec, 0));
-
-      if (remainingSec <= 0) {
-        clearInterval(timerId);
-        await postSession(durationMin, startedAt, new Date(), currentMonster.id);
-        msg('Session recorded. Great work.');
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
-      }
-    }, 1000);
-  });
-
-  stopBtn.addEventListener('click', () => {
-    if (!timerId) return;
-    clearInterval(timerId);
-    document.getElementById('countdown').textContent = fmt(0);
-    startBtn.disabled = false;
-    stopBtn.disabled = true;
-    msg('Timer stopped early (not recorded).');
-  });
-}
-
-async function postSession(durationMin, startedAt, endedAt, monsterId) {
-  const token = localStorage.getItem('token');
-  if (!token) {
-    msg('Not logged in.');
-    window.location.href = '/login.html';
-    return;
+  function tick() {
+    if (remaining <= 0) {
+      clearInterval(t); t = null;
+      render();
+      done.style.display = 'block';
+      return;
+    }
+    remaining -= 1;
+    render();
   }
-  const res = await fetch('/api/sessions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      monsterId,
-      durationMin,
-      startedAt,
-      endedAt
-    })
-  });
-  if (!res.ok) {
-    const data = await res.json().catch(() => ({}));
-    msg(data.error || 'Failed to record session.');
-    return;
-  }
-  const data = await res.json();
-  currentMonster = data.monster;
-  await fetchCurrentMonster();
-}
 
-window.addEventListener('DOMContentLoaded', async () => {
-  if (!localStorage.getItem('token')) {
-    window.location.href = '/login.html';
-    return;
+  function start() {
+    if (t) return;
+    if (remaining <= 0) remaining = secs;
+    t = setInterval(tick, 1000);
   }
-  await fetchCurrentMonster();
-  bindButtons();
-});
+  function pause() { if (t) { clearInterval(t); t = null; } }
+  function reset() { pause(); remaining = secs; done.style.display = 'none'; render(); }
+  function finishEarly() { remaining = 0; tick(); }
+
+  // wire buttons
+  document.getElementById('startBtn').addEventListener('click', start);
+  document.getElementById('pauseBtn').addEventListener('click', pause);
+  document.getElementById('resetBtn').addEventListener('click', reset);
+  document.getElementById('finishBtn').addEventListener('click', finishEarly);
+
+  // load monster chosen on Home
+  document.addEventListener('DOMContentLoaded', async () => {
+    try {
+      const res = await fetch('/api/users/user', { credentials: 'include' });
+      if (!res.ok) throw new Error();
+    } catch {
+      return (window.location.href = '/login.html');
+    }
+
+    const raw = localStorage.getItem('currentMonster');
+    if (!raw) return (window.location.href = '/home.html');
+
+    const m = JSON.parse(raw);
+    mName.textContent = m.name;
+    mImg.src = m.imageUrl || '/assets/placeholder.png';
+    mImg.onerror = () => (mImg.src = '/assets/placeholder.png');
+    mMeta.textContent = `${m.minutes} minute session`;
+
+    secs = (m.minutes || 25) * 60;
+    remaining = secs;
+    render();
+  });
+})();
