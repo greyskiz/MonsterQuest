@@ -18,6 +18,13 @@ enum Scope {
   PARTY
 }
 
+enum EncounterStatus {
+  ONGOING
+  PAUSED
+  COMPLETED
+  ABANDONED
+}
+
 model User {
   id           String   @id @default(uuid())
   username     String   @unique
@@ -28,13 +35,18 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  encounters Encounter[]
-  defeats    UserMonsterDefeat[]
+  // Relations
+  encounters   Encounter[]
+  defeats      UserMonsterDefeat[]
+  participants EncounterParticipant[]
+
+  @@index([username])
+  @@index([email])
 }
 
 model MonsterTemplate {
   id        String   @id @default(uuid())
-  name      String
+  name      String   @unique // prevent duplicate monster names
   tier      Tier
   scope     Scope
   minutes   Int
@@ -43,19 +55,45 @@ model MonsterTemplate {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // Relations
   encounters Encounter[]
   defeats    UserMonsterDefeat[]
 }
 
 model Encounter {
-  id         String    @id @default(uuid())
-  userId     String
-  monsterId  String
-  startedAt  DateTime  @default(now())
-  finishedAt DateTime?
+  id              String          @id @default(uuid())
+  userId          String
+  monsterId       String
+  status          EncounterStatus // <— use enum not String
+  startedAt       DateTime        @default(now())
+  finishedAt      DateTime?
+  plannedDuration Int // minutes planned for this session
+  elapsed         Int             @default(0) // minutes elapsed (heartbeat)
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
-  user    User            @relation(fields: [userId], references: [id])
-  monster MonsterTemplate @relation(fields: [monsterId], references: [id])
+  // Relations
+  user    User                   @relation(fields: [userId], references: [id])
+  monster MonsterTemplate        @relation(fields: [monsterId], references: [id])
+  members EncounterParticipant[] 
+
+  @@index([userId])
+  @@index([monsterId])
+  @@index([status])
+}
+
+model EncounterParticipant {
+  id          String   @id @default(uuid())
+  encounterId String
+  userId      String
+  joinedAt    DateTime @default(now())
+
+  encounter Encounter @relation(fields: [encounterId], references: [id])
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@unique([encounterId, userId]) 
+  @@index([userId])
+  @@index([encounterId])
 }
 
 model UserMonsterDefeat {
@@ -66,4 +104,8 @@ model UserMonsterDefeat {
 
   user     User            @relation(fields: [userId], references: [id])
   template MonsterTemplate @relation(fields: [monsterId], references: [id])
+
+  @@unique([userId, monsterId]) 
+  @@index([userId])
+  @@index([monsterId])
 }

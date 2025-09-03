@@ -1,60 +1,31 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="utf-8" />
   <title>Study Session</title>
-  <link rel="stylesheet" href="/main.css"/>
-  <style>
-    .wrap{max-width:760px;margin:40px auto;padding:0 16px}
-    .timer{font-size:80px;font-weight:800;text-align:center;margin:16px 0}
-    .bar{display:flex;gap:12px;justify-content:center}
-    .img{height:120px;border-radius:12px;border:1px solid #e4eaef}
-    .btn{background:#2ea44f;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
-    .btn-muted{background:#eef3f8;color:#333}
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="/main.css" />
 </head>
 <body>
   <div class="wrap">
-    <a class="btn btn-muted" href="/home.html">← Back</a>
-    <div class="card" style="display:flex;gap:16px;align-items:center;margin-top:16px;">
-      <img id="img" class="img" src="/assets/placeholder.png" alt="">
-      <h2 id="title" style="margin:0;">...</h2>
+    <a class="back" href="/home.html">← Back</a>
+
+    <div class="header" style="display:flex;gap:16px;align-items:center;margin:12px 0">
+      <img id="monsterImg" style="width:80px;height:80px;object-fit:cover;border-radius:12px;background:#eee" />
+      <h2 id="monsterName" style="margin:0">...</h2>
     </div>
-    <div id="display" class="timer">00:00</div>
-    <div class="bar">
-      <button id="start" class="btn">Start</button>
-      <button id="pause" class="btn btn-muted">Pause</button>
-      <button id="reset" class="btn btn-muted">Reset</button>
-      <button id="finish" class="btn btn-muted">Finish early</button>
+
+    <div id="display" class="timer" style="font-size:140px;text-align:center;margin:24px 0">--:--</div>
+
+    <div class="bar" style="display:flex;gap:12px;justify-content:center">
+      <button id="start"  class="btn btn-primary">Start</button>
+      <button id="pause"  class="btn">Pause</button>
+      <button id="reset"  class="btn">Reset</button>
+      <button id="finish" class="btn">Finish early</button>
     </div>
   </div>
 
-  <script>
-    const qs = new URLSearchParams(location.search);
-    const name = qs.get('name') || 'Session';
-    const minutes = parseInt(qs.get('minutes')||'0',10) || 25;
-    const img = qs.get('img') || '';
-    document.getElementById('title').textContent = name;
-    if (img) document.getElementById('img').src = img;
-
-    const disp = document.getElementById('display');
-    let remaining = minutes * 60;
-    let t=null;
-
-    function fmt(s){ const m=Math.floor(s/60), ss=s%60; return `${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;}
-    function tick(){ remaining=Math.max(0,remaining-1); disp.textContent=fmt(remaining); if(remaining===0) stop();}
-    function start(){ if(!t) t=setInterval(tick,1000); }
-    function stop(){ if(t){ clearInterval(t); t=null; } }
-    function reset(){ stop(); remaining = minutes*60; disp.textContent=fmt(remaining); }
-    function finish(){ stop(); remaining=0; disp.textContent='00:00'; }
-
-    document.getElementById('start').onclick=start;
-    document.getElementById('pause').onclick=stop;
-    document.getElementById('reset').onclick=reset;
-    document.getElementById('finish').onclick=finish;
-
-    reset();
-  </script>
+  <script src="/auth.js"></script>
+  <script src="timer.js" defer></script>
 </body>
 </html>

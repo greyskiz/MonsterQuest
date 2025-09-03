@@ -8,8 +8,9 @@ require('dotenv').config({ quiet: true });
 const authRoutes = require('./routes/auth');
 const usersRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
-// If you already have monster APIs, keep this:
-const monsterRoutes = require('./routes/monster'); // optional
+const monsterRoutes = require('./routes/monster');
+const encounterRoutes = require('./routes/encounter'); 
+
 
 const app = express();
 
@@ -24,7 +25,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/monster', monsterRoutes); // optional
+app.use('/api/monster', monsterRoutes); 
+app.use('/api/encounter', encounterRoutes);
 
 // 404 for unknown endpoints
 app.use((req, res, next) => {
