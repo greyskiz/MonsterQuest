@@ -23,7 +23,8 @@ async function finishAuthFlow() {
     const user = await fetchMe();
     setSessionUser(user);
     if (user.role === 'ADMIN') window.location.href = '/admin/home.html';
-    else window.location.href = '/home.html';
+    //else window.location.href = '/home.html';
+    else window.location.href = '/createAvatar.html';
   } catch (err) {
     console.error(err);
     showError('Could not load your profile. Try again.');

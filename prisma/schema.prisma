@@ -39,6 +39,8 @@ model User {
   encounters   Encounter[]
   defeats      UserMonsterDefeat[]
   participants EncounterParticipant[]
+  inventory    UserInventory[] // items owned
+  avatar       Avatar?         // a user must have one avatar
 
   @@index([username])
   @@index([email])
@@ -108,4 +110,58 @@ model UserMonsterDefeat {
   @@unique([userId, monsterId]) 
   @@index([userId])
   @@index([monsterId])
+}
+
+
+//Represents all items available in the shop (what can be bought)
+model shopItem {
+  id        String   @id @default(uuid())
+  name      String
+  slot      String   // e.g. "head", "body", "weapon"
+  price     Int      // cost in coins
+  rarity    String   // e.g. "common", "rare", "legendary" (only for aesthetic purposes)
+  imageUrl  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ownedBy UserInventory[]   @relation("ItemOwnership")   // which users own this item
+  equippedAsHead Avatar[]   @relation("HeadItem")        // avatars using as head
+  equippedAsBody Avatar[]   @relation("BodyItem")        // avatars using as body
+  equippedAsWeapon Avatar[] @relation("WeaponItem")      // avatars using as weapon
+}
+
+
+//Tracks the shop items users own (note: 1 shop item can be owned by more than 1 user, but a user cannot have more than 1 item of the same type)
+model UserInventory {
+  id              String   @id @default(uuid())
+  userId          String
+  inventoryItemId String
+  acquiredAt      DateTime @default(now())
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item           shopItem       @relation(fields: [inventoryItemId], references: [id], name: "ItemOwnership")
+
+  @@unique([userId, inventoryItemId]) // user cannot own the same item twice
+}
+
+
+//Represents the current shop items the users chose to equip their avatar
+model Avatar {
+  id      String @id @default(uuid())
+  userId  String @unique
+  name      String   // user-defined name
+  imageUrl  String   // user-chosen picture
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Slots (shop items will be null at first when avatar is first created, user must earn coins from fighting monsters to get items)
+  headId   String?
+  bodyId   String?
+  weaponId String?
+
+  user   User           @relation(fields: [userId], references: [id])
+  head   shopItem ?      @relation("HeadItem", fields: [headId], references: [id])
+  body   shopItem ?      @relation("BodyItem", fields: [bodyId], references: [id])
+  weapon shopItem ?      @relation("WeaponItem", fields: [weaponId], references: [id])
+
 }

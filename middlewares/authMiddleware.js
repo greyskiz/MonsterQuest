@@ -15,7 +15,7 @@ async function authRequired(req, res, next) {
     const payload = jwt.verify(token, secretKey); // { sub }
     const user = await prisma.user.findUnique({
       where: { id: payload.sub || payload.id },
-      select: { id: true, username: true, email: true, displayName: true, role: true },
+      select: { id: true, username: true, email: true, displayName: true, role: true }, // what the req.user contains
     });
     if (!user) return res.status(401).json({ message: 'User not found' });
 

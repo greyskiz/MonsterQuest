@@ -10,6 +10,7 @@ const usersRoutes = require('./routes/users');
 const adminRoutes = require('./routes/admin');
 const monsterRoutes = require('./routes/monster');
 const encounterRoutes = require('./routes/encounter'); 
+const avatarRoutes = require('./routes/avatar'); 
 
 
 const app = express();
@@ -27,6 +28,7 @@ app.use('/api/users', usersRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/monster', monsterRoutes); 
 app.use('/api/encounter', encounterRoutes);
+app.use('/api/avatar', avatarRoutes);
 
 // 404 for unknown endpoints
 app.use((req, res, next) => {

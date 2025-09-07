@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Avatar — MonsterQuest</title>
+  <link rel="stylesheet" href="./main.css"/>
+  <style>
+    .wrap{max-width:680px;margin:40px auto;padding:0 16px}
+    .card{background:#fff;border:1px solid #eef1f4;border-radius:16px;box-shadow:0 6px 26px rgba(16,24,40,.06);padding:24px;margin:14px 0}
+    .bar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .btn{background:#2ea44f;color:#fff;border:none;border-radius:10px;padding:10px 14px;font-weight:700;cursor:pointer}
+    .btn-muted{background:#eef3f8;color:#333}
+    .field{margin:14px 0;display:flex;flex-direction:column;gap:6px}
+    .field input{padding:10px;border:1px solid #ccd5dd;border-radius:8px;font-size:16px}
+    .error{color:#c62828;margin-top:8px}
+    .preview{margin-top:16px;text-align:center}
+    .preview img{max-width:180px;border-radius:12px;border:1px solid #e4eaef}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1 style="margin:0 0 20px;">Before we begin, let's create your avatar 👾</h1>
+
+    <div class="card">
+      <form id="avatarForm">
+        <div class="field">
+          <label for="name">Avatar Name</label>
+          <input id="name" name="name" type="text" placeholder="Enter your avatar's name" required />
+        </div>
+
+        <div class="field">
+          <label for="imageUrl">Avatar Picture URL</label>
+          <input id="imageUrl" name="imageUrl" type="url" placeholder="https://example.com/avatar.png" required />
+        </div>
+
+        <div class="preview" id="preview"></div>
+
+        <div class="bar" style="margin-top:20px;">
+          <button type="submit" class="btn">Save Avatar</button>
+          <a href="/signup.html" class="btn btn-muted">Cancel</a>
+        </div>
+
+        <p id="error" class="error"></p>
+      </form>
+    </div>
+  </div>
+
+  <script src="./createAvatar.js" defer></script>
+</body>
+</html>
